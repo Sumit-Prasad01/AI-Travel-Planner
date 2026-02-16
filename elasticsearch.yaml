@@ -10,6 +10,7 @@ spec:
     requests:
       storage: 2Gi
   storageClassName: standard
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -29,29 +30,40 @@ spec:
       containers:
         - name: elasticsearch
           image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+          imagePullPolicy: IfNotPresent
+
           env:
             - name: discovery.type
-              value: single-node
-            - name: ES_JAVA_OPTS
-              value: "-Xms512m -Xmx512m"
+              value: "single-node"
+
             - name: xpack.security.enabled
               value: "false"
+
+            - name: ES_JAVA_OPTS
+              value: "-Xms512m -Xmx512m -Dlog4j2.disable.jmx=true -Des.cgroups.hierarchy.override=/"
+
           ports:
-            - containerPort: 9200
+            - name: http
+              containerPort: 9200
+              protocol: TCP
+
           resources:
-            limits:
-              memory: "2Gi"
-              cpu: "1"
             requests:
-              memory: "1Gi"
               cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+
           volumeMounts:
-            - mountPath: /usr/share/elasticsearch/data
-              name: elasticsearch-storage
+            - name: elasticsearch-storage
+              mountPath: /usr/share/elasticsearch/data
+
       volumes:
         - name: elasticsearch-storage
           persistentVolumeClaim:
             claimName: elasticsearch-pvc
+
 ---
 apiVersion: v1
 kind: Service
@@ -59,9 +71,11 @@ metadata:
   name: elasticsearch
   namespace: logging
 spec:
+  type: ClusterIP
   selector:
     app: elasticsearch
   ports:
-    - protocol: TCP
+    - name: http
       port: 9200
       targetPort: 9200
+      protocol: TCP

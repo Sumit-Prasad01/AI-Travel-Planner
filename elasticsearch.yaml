@@ -8,7 +8,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: 5Gi
   storageClassName: standard
 
 ---
@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: elasticsearch
-          image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
           imagePullPolicy: IfNotPresent
 
           env:
@@ -39,8 +39,11 @@ spec:
             - name: xpack.security.enabled
               value: "false"
 
+            - name: xpack.security.enrollment.enabled
+              value: "false"
+
             - name: ES_JAVA_OPTS
-              value: "-Xms512m -Xmx512m -Dlog4j2.disable.jmx=true -Des.cgroups.hierarchy.override=/"
+              value: "-Xms512m -Xmx512m -Dlog4j2.disable.jmx=true"
 
           ports:
             - name: http
